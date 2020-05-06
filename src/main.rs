@@ -1,78 +1,87 @@
-use raylib::consts::BlendMode;
-use raylib::consts::KeyboardKey;
-use raylib::core::texture::Image;
-use raylib::ffi::TextureFilterMode::FILTER_POINT;
-use raylib::ffi::{DrawRectangle, GetFrameTime};
-use raylib::prelude::*;
-use std::convert::TryInto;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
-use tiled::parse;
-use tiled::Map;
-use tiled::*;
+//use raylib::core::color::Color;
 
+use raylib::ffi::*;
 fn main() {
-    let file = File::open(&Path::new("assets/mymap.tmx")).unwrap();
-    let reader = BufReader::new(file);
-    let map: Map = parse(reader).unwrap();
-    //dbg!(&map.layers[0].tiles[0]);
+    unsafe {
+        let screenWidth = 800;
+        let screenHeight = 450;
+        let tile_height = 16;
+        let tile_width = 20;
+        InitWindow(
+            screenWidth,
+            screenHeight,
+            "raylib template - simple game".as_ptr() as *const i8,
+        );
+        SetTargetFPS(30); // Set desired framerate (frames-per-second)
 
-    let (mut rl, thread) = raylib::init()
-        .size(640 as i32, 480 as i32)
-        .title("project_s")
-        .resizable()
-        .vsync()
-        .build();
+        let draw_buffer = LoadRenderTexture(640, 480);
+        //SetTextureFilter((RenderTexture2D)draw_buffer, FILTER_POlet);
 
-    rl.set_target_fps(30);
+        BeginDrawing();
+        BeginTextureMode(draw_buffer);
+        for y in 0..tile_height {
+            for x in 0..tile_width {
+                // dbg!(tile_id);
 
-    let mut draw_buffer = rl
-        .load_render_texture(&thread, map.width * 32, map.height * 32)
-        .expect("could not create texture");
-    draw_buffer.texture_mut().set_texture_filter(FILTER_POINT);
-
-    let floor_image = Image::load_image("assets/floors.png").expect("could not load floor image");
-    let floor_texture = rl
-        .load_texture_from_image(&thread, &floor_image)
-        .expect("could not convert floor image to texture");
-
-    //draw into the buffer
-    {
-        let mut gen = rl.begin_drawing(&thread);
-        let mut gen = gen.begin_texture_mode(&mut draw_buffer);
-        for layer in &map.layers {
-            for (y, y_item) in layer.tiles.iter().enumerate() {
-                for (x, tile) in y_item.iter().enumerate() {
-                    let tile = tile.gid;
-                    let pos = Vector2::new(32.0 * x as f32, 32.0 * y as f32);
-                    println!("x: {} y: {} || px: {} py: {}", x, y, pos.x, pos.y);
-                    gen.draw_texture_rec(
-                        &floor_texture,
-                        Rectangle::new((tile as f32 - 1.0) * 32.0, 0.0, 32.0, 32.0),
-                        Vector2::new(32.0 * x as f32, 32.0 * y as f32),
-                        Color::WHITE,
-                    );
-                }
+                let pos = Vector2 {
+                    x: (32 * x) as f32,
+                    y: (32 * y) as f32,
+                };
+                DrawRectangle(
+                    pos.x as i32,
+                    pos.y as i32,
+                    32,
+                    32,
+                    Color {
+                        r: 255,
+                        g: 0,
+                        b: 0,
+                        a: 155,
+                    },
+                );
             }
         }
-    }
-    while !rl.window_should_close() {
-        let mut d = rl.begin_drawing(&thread);
-        d.clear_background(Color::RED);
+        EndTextureMode();
+        EndDrawing();
 
-        d.draw_texture_rec(
-            draw_buffer.texture(),
-            Rectangle::new(
-                0.0,
-                0.0,
-                draw_buffer.texture().width as f32,
-                -draw_buffer.texture().height as f32,
-            ),
-            Vector2::new(0.0, 0.0),
-            Color::WHITE,
-        );
-        //dbg!(draw_buffer.texture().width());
-        //dbg!(draw_buffer.texture().height());
+        // Main game loop
+        while (!WindowShouldClose())
+        // Detect window close button or ESC key
+        {
+            BeginDrawing();
+            ClearBackground(Color {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 255,
+            });
+
+            let src = Rectangle {
+                x: 0.0,
+                y: 0.0,
+                width: draw_buffer.texture.width as f32,
+                height: -draw_buffer.texture.height as f32,
+            };
+            DrawTextureRec(
+                draw_buffer.texture,
+                src,
+                Vector2 { x: 0.0, y: 0.0 },
+                Color {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                    a: 255,
+                },
+            );
+            EndDrawing();
+        }
+
+        // De-Initialization
+        //--------------------------------------------------------------------------------------
+
+        // TODO: Unload all loaded data (textures, fonts, audio) here!
+
+        CloseWindow(); // Close window and OpenGL context
+                       //--------------------------------------------------------------------------------------
     }
 }

@@ -10,8 +10,7 @@ edition = "2018"
 
 # switch to 3.0 bindings
 raylib = {version="1.1.0", path = "./raylib"}
+# raylib-sys = {version="1.1.0", path="./raylib-sys"}
 
 #switch back to 2.6 bindings:
 # raylib = { git = "https://github.com/deltaphc/raylib-rs", branch = "master" }
-
-tiled = "0.9.1"
